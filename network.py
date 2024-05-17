@@ -1,37 +1,42 @@
 import numpy as np
-from functions import sigmoid, sigmoid_prime, step_function
+from functions import sigmoid, sigmoid_prime, step_function, hyperbolic_tangent, hyperbolic_tangent_prime, \
+    identity_function, step_function_prime, identity_function_prime
 import random
 
 
 class Network:
-    def __init__(self, sizes):
-        self.sizes = sizes
-        self.layers = len(self.sizes)
+    def __init__(self, sizes, hidden_activation_func: str, output_activation_func: str):
+        self.layer_sizes = sizes
+        self.layers = len(self.layer_sizes)
 
         self.biases = []
-        for y in self.sizes[1:]:  # from index 1 to self.sizes - 1
+        for y in self.layer_sizes[1:]:  # from index 1 to self.sizes - 1
             self.biases.append(np.random.randn(y, 1))
 
         self.weights = []
-        for x, y in zip(self.sizes[:-1], self.sizes[1:]):  # to create a matrix of (i) x (i + 1)
+        for x, y in zip(self.layer_sizes[:-1], self.layer_sizes[1:]):  # to create a matrix of (i) x (i + 1)
             self.weights.append(np.random.randn(y, x))  # add a matrix of (i) x (i + 1) with random values
 
-    def feedforward(self, a):  # a activation of any layer or input of the first layer
+        self.hidden_activation, self.hidden_activation_prime = self.get_activation_function(hidden_activation_func)
+        self.output_activation, self.output_activation_prime = self.get_activation_function(output_activation_func)
+
+    def feedforward(self, activation):  # a activation of any layer or input of the first layer
         layer = 0
         for b, w in zip(self.biases, self.weights):
-            z = np.dot(w, a) + b  # matrix operation (w x a) + b
-            a = sigmoid(z) if layer != self.layers - 2 else step_function(z)  # activation of the next layer
+            z = np.dot(w, activation) + b  # matrix operation (w x a) + b
+            activation = self.hidden_activation(z) if layer != self.layers - 2 \
+                else self.output_activation(z)  # activation of the next layer
             layer += 1
-        return a
+        return activation
 
-    def SGD(self, training_data, epochs, mini_batch_size, eta, test_data=None):
+    def SGD(self, training_data, epochs, mini_batch_size, learning_rate, test_data=None):
         if test_data: n_test = len(test_data)
         n = len(training_data)
         for j in range(epochs):
             random.shuffle(training_data)
             mini_batches = [training_data[k:k + mini_batch_size] for k in range(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
-                self.update_mini_batch(mini_batch, eta)
+                self.update_mini_batch(mini_batch, learning_rate)
             if test_data:
                 print(f'Epoch {j + 1} / {epochs}')
                 print(f'{j}, {self.evaluate(test_data)}, {n_test}')
@@ -56,19 +61,26 @@ class Network:
         activation = x
         activations = [activation]
         zs = []
+        layer = 0
         for b, w in zip(self.biases, self.weights):
             z = np.dot(w, activation) + b
             zs.append(z)
-            activation = sigmoid(z)
+            activation = self.hidden_activation(z) if layer != self.layers - 2 \
+                else self.output_activation(z)
             activations.append(activation)
+            layer += 1
 
-        delta = self.cost_prime(activations[-1], y) * sigmoid_prime(zs[-1])
+        error = self.cost_prime(activations[-1], y)
+        print(f'error: {error[np.argmax(error)]}')
+        # delta = self.cost_prime(activations[-1], y) * self.output_layers_activation_func_prime(zs[-1])  # output layer
+        delta = error * sigmoid_prime(zs[-1])
+
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
 
         for l in range(2, self.layers):
             z = zs[-l]
-            sp = sigmoid_prime(z)
+            sp = self.hidden_activation_prime(z)
             delta = np.dot(self.weights[-l + 1].transpose(), delta) * sp
             nabla_b[-l] = delta
             nabla_w[-l] = np.dot(delta, activations[-l - 1].transpose())
@@ -81,3 +93,14 @@ class Network:
     @staticmethod
     def cost_prime(actual, predicted):
         return actual - predicted
+
+    @staticmethod
+    def get_activation_function(name):
+        if name == 'sigmoid':
+            return sigmoid, sigmoid_prime
+        elif name == 'tanh':
+            return hyperbolic_tangent, hyperbolic_tangent_prime
+        elif name == 'step':
+            return step_function, step_function_prime
+        elif name == 'identity':
+            return identity_function, identity_function_prime
