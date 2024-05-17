@@ -21,29 +21,26 @@ class Network:
         self.output_activation, self.output_activation_prime = self.get_activation_function(output_activation_func)
 
     def feedforward(self, activation):  # a activation of any layer or input of the first layer
-        layer = 0
         for b, w in zip(self.biases, self.weights):
             z = np.dot(w, activation) + b  # matrix operation (w x a) + b
-            activation = self.hidden_activation(z) if layer != self.layers - 2 \
-                else self.output_activation(z)  # activation of the next layer
-            layer += 1
-        return activation
+            activation = self.hidden_activation(z)
+        return self.output_activation(z)
 
     def SGD(self, training_data, epochs, mini_batch_size, learning_rate, test_data=None):
         if test_data: n_test = len(test_data)
         n = len(training_data)
-        for j in range(epochs):
+        for epoch in range(epochs):
             random.shuffle(training_data)
             mini_batches = [training_data[k:k + mini_batch_size] for k in range(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, learning_rate)
             if test_data:
-                print(f'Epoch {j + 1} / {epochs}')
-                print(f'{j}, {self.evaluate(test_data)}, {n_test}')
+                accuracy = self.evaluate(test_data)
+                print(f'Epoch {epoch + 1}: {accuracy} / {len(test_data)}')
             else:
-                print(f'Epoch {j + 1} / {epochs}')
+                print(f'Epoch {epoch + 1} complete')
 
-    def update_mini_batch(self, mini_batch, eta):
+    def update_mini_batch(self, mini_batch, learning_rate):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         for x, y in mini_batch:
@@ -51,39 +48,35 @@ class Network:
             nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
 
-        self.weights = [(w - (eta / len(mini_batch)) * nw) for w, nw, in zip(self.weights, nabla_w)]
-        self.biases = [(b - (eta / len(mini_batch)) * nb) for b, nb in zip(self.biases, nabla_b)]
+        self.weights = [(w - (learning_rate / len(mini_batch)) * nw) for w, nw, in zip(self.weights, nabla_w)]
+        self.biases = [(b - (learning_rate / len(mini_batch)) * nb) for b, nb in zip(self.biases, nabla_b)]
 
     def backprop(self, x, y):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
 
         activation = x
-        activations = [activation]
+        activations = [x]
         zs = []
-        layer = 0
         for b, w in zip(self.biases, self.weights):
             z = np.dot(w, activation) + b
             zs.append(z)
-            activation = self.hidden_activation(z) if layer != self.layers - 2 \
-                else self.output_activation(z)
+            activation = self.hidden_activation(z)
             activations.append(activation)
-            layer += 1
 
         error = self.cost_prime(activations[-1], y)
+        delta = error * self.output_activation_prime(zs[-1])
         print(f'error: {error[np.argmax(error)]}')
-        # delta = self.cost_prime(activations[-1], y) * self.output_layers_activation_func_prime(zs[-1])  # output layer
-        delta = error * sigmoid_prime(zs[-1])
 
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
 
-        for l in range(2, self.layers):
-            z = zs[-l]
+        for layer in range(2, self.layers):
+            z = zs[-layer]
             sp = self.hidden_activation_prime(z)
-            delta = np.dot(self.weights[-l + 1].transpose(), delta) * sp
-            nabla_b[-l] = delta
-            nabla_w[-l] = np.dot(delta, activations[-l - 1].transpose())
+            delta = np.dot(self.weights[-layer + 1].transpose(), delta) * sp
+            nabla_b[-layer] = delta
+            nabla_w[-layer] = np.dot(delta, activations[-layer - 1].transpose())
         return nabla_b, nabla_w
 
     def evaluate(self, test_data):
