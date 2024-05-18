@@ -48,8 +48,8 @@ class Network:
             nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
 
-        self.weights = [(w - (learning_rate / len(mini_batch)) * nw) for w, nw, in zip(self.weights, nabla_w)]
-        self.biases = [(b - (learning_rate / len(mini_batch)) * nb) for b, nb in zip(self.biases, nabla_b)]
+        self.weights = [(w - learning_rate * nw) for w, nw, in zip(self.weights, nabla_w)]
+        self.biases = [(b - learning_rate * nb) for b, nb in zip(self.biases, nabla_b)]
 
     def backprop(self, x, y):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
@@ -64,9 +64,8 @@ class Network:
             activation = self.hidden_activation(z)
             activations.append(activation)
 
-        error = self.cost_prime(activations[-1], y)
-        delta = error * self.output_activation_prime(zs[-1])
-        print(f'error: {error[np.argmax(error)]}')
+        delta = self.cost_prime(activations[-1], y)
+        # delta = self.cost_prime(activations[-1], y) * self.output_activation_prime(zs[-1])
 
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())

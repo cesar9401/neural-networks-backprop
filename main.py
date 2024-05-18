@@ -24,13 +24,14 @@ test_output = np.array([[0], [1], [1], [0]])
 training_data = [(x.reshape(-1, 1), y.reshape(-1, 1)) for x, y in zip(inputs, outputs)]
 test_data = [(x.reshape(-1, 1), y.reshape(-1, 1)) for x, y in zip(inputs1, test_output)]
 
-network1 = Network([2, 100, 200, 300, 200, 100, 1], 'tanh', 'step')
+network1 = Network([2, 100, 200, 300, 200, 100, 1], 'sigmoid', 'step')
 network1.SGD(test_data, 1000, 1, 0.2, None)
 
 for x, y in test_data:
     output = network1.feedforward(x)
-    expected = np.argmax(y)
-    print(f'(result {y[0][0] == output})\t\texpected: {y[0][expected]} -> output: {output}')
+    expected = y
+    # expected = np.argmax(y)
+    print(f'(result {expected == output})\t\texpected: {expected} -> output: {output}')
     # print(y[0][0] == network1.feedforward(x))
 
 # result = network1.evaluate(test_data)

@@ -10,11 +10,11 @@ def sigmoid_prime(z):
 
 
 def hyperbolic_tangent(z):
-    return (np.exp(2 * z) - 1) / (np.exp(2 * z) + 1)
+    return np.tanh(z)
 
 
 def hyperbolic_tangent_prime(z):
-    return pow((2 * np.exp(z)) / (np.exp(2 * z) + 1), 2)
+    return 1.0 - z ** 2
 
 
 def identity_function(z):
@@ -26,8 +26,8 @@ def identity_function_prime(z):
 
 
 def step_function(z):
-    return 1 if z >= 0 else 0
+    return np.where(z > 0, 1, 0)
 
 
 def step_function_prime(z):
-    return 0
+    return np.where(z > 0, 0, 0)
