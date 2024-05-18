@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QApplication, QStyleFactory
 import sys
 import re
 
-from network import Network
+from neural.network import Network
 from ui import main_widget
 
 import pandas as pd
@@ -34,9 +34,20 @@ class Main:
             return
 
         testing_data = self.read_file(testing_file)
-        for x, expected in testing_data:
-            output = self.network.feedforward(x)
-            print(f'(result {expected == output})\t\texpected: {expected} -> output: {output}')
+        correct = 0
+
+        df, in_cols, out_cols = self.get_total_inputs_and_outputs(testing_file)
+
+        for file_data, df_data in zip(testing_data, df.iterrows()):
+            output = self.network.feedforward(file_data[0])
+            inputs = [df_data[1][col] for col in in_cols]
+            outputs = [df_data[1][col] for col in out_cols]
+            result = (file_data[1] == output)
+            correct = correct + 1 if result[0, 0] else correct
+            print(f'(result: {result[0, 0]})\t\tinput: {inputs}, expected: {outputs}, output: {output.ravel()}')
+
+        accuracy = (correct / len(testing_data)) * 100
+        print(f'Accuracy: {accuracy}%')
 
     def read_file(self, filename):
         df, in_cols, out_cols = self.get_total_inputs_and_outputs(filename)
@@ -57,54 +68,18 @@ class Main:
         file_output = np.array(total_outputs)
         return [(x.reshape(-1, 1), y.reshape(-1, 1)) for x, y in zip(file_input, file_output)]
 
-    @staticmethod
-    def get_total_inputs_and_outputs(filename):
-        df = pd.read_csv(filename)
+    def get_total_inputs_and_outputs(self, filename):
+        df = self.get_df(filename)
 
         in_cols = [col for col in df.columns if re.search(REGEX_INPUT, col)]
         out_cols = [col for col in df.columns if re.search(REGEX_OUTPUT, col)]
 
         return df, in_cols, out_cols
 
+    @staticmethod
+    def get_df(filename):
+        return pd.read_csv(filename)
 
-# from network import Network
-# import numpy as np
-#
-# print('Hello, there!')
-#
-#
-# def logical_or(x):
-#     return int(x[0] or x[1])
-#
-#
-# def logical_and(x):
-#     return int(x[0] and x[1])
-#
-#
-# # Generate inputs for the logical OR function
-# inputs = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-# inputs1 = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-#
-# # Generate outputs for the logical OR function
-# outputs = np.array([logical_or(x) for x in inputs])
-# test_output = np.array([[0], [1], [1], [0]])
-#
-# # Combine inputs and outputs into a list of 2-tuples
-# training_data = [(x.reshape(-1, 1), y.reshape(-1, 1)) for x, y in zip(inputs, outputs)]
-# test_data = [(x.reshape(-1, 1), y.reshape(-1, 1)) for x, y in zip(inputs1, test_output)]
-#
-# network1 = Network([2, 100, 200, 300, 200, 100, 1], 'sigmoid', 'step')
-# network1.SGD(test_data, 1000, 1, 0.2, None)
-#
-# for x, y in test_data:
-#     output = network1.feedforward(x)
-#     expected = y
-#     # expected = np.argmax(y)
-#     print(f'(result {expected == output})\t\texpected: {expected} -> output: {output}')
-#     # print(y[0][0] == network1.feedforward(x))
-#
-# # result = network1.evaluate(test_data)
-# # print(result)
 
 if __name__ == '__main__':
     main = Main()

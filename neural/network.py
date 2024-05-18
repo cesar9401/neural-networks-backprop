@@ -1,5 +1,5 @@
 import numpy as np
-from functions import sigmoid, sigmoid_prime, step_function, hyperbolic_tangent, hyperbolic_tangent_prime, \
+from neural.functions import sigmoid, sigmoid_prime, step_function, hyperbolic_tangent, hyperbolic_tangent_prime, \
     identity_function, step_function_prime, identity_function_prime
 import random
 
