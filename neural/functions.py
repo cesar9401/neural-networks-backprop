@@ -14,7 +14,7 @@ def hyperbolic_tangent(z):
 
 
 def hyperbolic_tangent_prime(z):
-    return 1.0 - z ** 2
+    return 1.0 - hyperbolic_tangent(z) ** 2
 
 
 def identity_function(z):
