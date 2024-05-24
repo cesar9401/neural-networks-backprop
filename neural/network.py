@@ -9,18 +9,14 @@ class Network:
         self.layer_sizes = sizes
         self.layers = len(self.layer_sizes)
 
-        self.biases = []
-        for y in self.layer_sizes[1:]:  # from index 1 to self.sizes - 1
-            self.biases.append(np.random.randn(y, 1))
-
-        self.weights = []
-        for x, y in zip(self.layer_sizes[:-1], self.layer_sizes[1:]):  # to create a matrix of (i) x (i + 1)
-            self.weights.append(np.random.randn(y, x))  # add a matrix of (i) x (i + 1) with random values
+        self.biases = [np.random.randn(y, 1) for y in self.layer_sizes[1:]]  # from index 1 to self.sizes - 1
+        # to create a matrix of (i) x (i + 1), add a matrix of (i) x (i + 1) with random values
+        self.weights = [np.random.randn(y, x) / np.sqrt(x) for x, y in zip(self.layer_sizes[:-1], self.layer_sizes[1:])]
 
         self.hidden_activation, self.hidden_activation_prime = self.get_activation_function(hidden_activation_func)
         self.output_activation, self.output_activation_prime = self.get_activation_function(output_activation_func)
 
-    def feedforward(self, activation):  # a activation of any layer or input of the first layer
+    def feedforward(self, activation):  # activation of any layer or input of the first layer
         for b, w in zip(self.biases, self.weights):
             z = np.dot(w, activation) + b  # matrix operation (w x a) + b
             activation = self.hidden_activation(z)
@@ -47,14 +43,19 @@ class Network:
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-
-        self.weights = [(w - learning_rate * nw) for w, nw, in zip(self.weights, nabla_w)]
+        print('before')
+        print(self.weights)
+        print(self.biases)
+        self.weights = [(w - learning_rate * nw) for w, nw in zip(self.weights, nabla_w)]
         self.biases = [(b - learning_rate * nb) for b, nb in zip(self.biases, nabla_b)]
+
+        print('after')
+        print(self.weights)
+        print(self.biases)
 
     def backprop(self, x, y):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
-
         activation = x
         activations = [x]
         zs = []
@@ -63,13 +64,12 @@ class Network:
             zs.append(z)
             activation = self.hidden_activation(z)
             activations.append(activation)
+        activations[-1] = self.output_activation(z)
 
-        delta = self.cost_prime(activations[-1], y)
-        # delta = self.cost_prime(activations[-1], y) * self.output_activation_prime(zs[-1])
+        delta = self.cost_prime(activations[-1], y) * self.output_activation_prime(zs[-1])
 
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
-
         for layer in range(2, self.layers):
             z = zs[-layer]
             sp = self.hidden_activation_prime(z)
