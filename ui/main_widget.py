@@ -62,14 +62,14 @@ class MainWidget(QWidget):
         # functions for output layer
         self.output_function_options = QComboBox()
         self.output_function_options.addItems(self.functions1)
-        self.output_function_options.setCurrentIndex(2)
+        self.output_function_options.setCurrentIndex(3)
         layout.addWidget(QLabel('Function for output layer'))
         layout.addWidget(self.output_function_options)
 
         # epochs
         self.epochs_spin = QSpinBox()
         self.epochs_spin.setRange(1, 2147483647)
-        self.epochs_spin.setValue(1000)
+        self.epochs_spin.setValue(10000)
         layout.addWidget(QLabel('Epochs'))
         layout.addWidget(self.epochs_spin)
 
