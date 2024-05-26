@@ -14,7 +14,7 @@ def hyperbolic_tangent(z):
 
 
 def hyperbolic_tangent_prime(z):
-    return 1.0 - hyperbolic_tangent(z) ** 2
+    return 1.0 - np.tanh(z) ** 2
 
 
 def identity_function(z):
@@ -22,7 +22,7 @@ def identity_function(z):
 
 
 def identity_function_prime(z):
-    return 1
+    return np.ones_like(z)
 
 
 def step_function(z):

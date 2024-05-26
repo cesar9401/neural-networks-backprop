@@ -43,15 +43,8 @@ class Network:
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-        print('before')
-        print(self.weights)
-        print(self.biases)
         self.weights = [(w - learning_rate * nw) for w, nw in zip(self.weights, nabla_w)]
         self.biases = [(b - learning_rate * nb) for b, nb in zip(self.biases, nabla_b)]
-
-        print('after')
-        print(self.weights)
-        print(self.biases)
 
     def backprop(self, x, y):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
