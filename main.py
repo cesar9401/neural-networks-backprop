@@ -43,12 +43,8 @@ class Main:
             output = self.network.feedforward(file_data[0])
             inputs = [df_data[1][col] for col in in_cols]
             outputs = [df_data[1][col] for col in out_cols]
-            result = (file_data[1] == output)
-            correct = correct + 1 if result[0, 0] else correct
-            print(f'(result: {result[0, 0]})\t\tinput: {inputs}, expected: {outputs}, output: {output.ravel()}')
+            print(f'input: {inputs}, expected: {outputs}, output: {output.ravel()}')
 
-        accuracy = (correct / len(testing_data)) * 100
-        print(f'Accuracy: {accuracy}%')
         print(f'Tested: {testing_file}')
 
     def read_file(self, filename):
